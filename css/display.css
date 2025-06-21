@@ -1,0 +1,137 @@
+body {
+  display: flex; /* footer下部に固定のため */
+  flex-direction: column; /* footer下部に固定のため */
+  min-height: 100vh; /* footer下部に固定のため */
+  margin: 0 auto;
+  text-align: center;
+  font-family: "Noto Sans JP", sans-serif;
+  color: #424040;
+}
+
+/* ==========================================
+
+メイン
+
+==========================================*/
+
+main {
+  margin: 0 auto;
+  flex-grow: 1; /* footer下部に固定のため */
+}
+
+.container {
+  flex-grow: 1; /* 利用可能な残りのスペースをすべて占める */
+  text-align: left;
+}
+
+a {
+  text-decoration: none;
+}
+
+.list {
+  margin-top: 40px;
+}
+
+.list-btn {
+  border-bottom: 1px solid #333333;
+  padding-bottom: 2px;
+  color: #333333;
+}
+
+.list-btn:hover {
+  color: #1b79d7;
+  border-bottom: 1px solid #1b79d7;
+}
+
+h2 {
+  margin-top: 40px;
+  font-size: 25px;
+  font-weight: bold;
+  text-align: center;
+  color: #333333;
+}
+
+/* ==========================================
+
+申込者のリスト
+
+==========================================*/
+
+table {
+  width: 800px;
+  margin-top: 20px;
+}
+
+th,
+td {
+  padding: 6px 30px;
+  border: 1px solid #a8a8a8;
+  font-size: 14px;
+}
+
+th {
+  text-align: center;
+  font-weight: bold;
+  background-color: #c7e5f0;
+}
+
+.no {
+  text-align: center;
+}
+
+.time {
+  text-align: right;
+}
+
+tr:nth-child(even) {
+  background-color: #f8f8f5;
+}
+
+/* ==========================================
+
+申込者からの質問
+
+==========================================*/
+
+.qa-list {
+  width: 800px;
+  margin-top: 40px;
+}
+
+.qa-list li {
+  padding: 10px 5px;
+  border-bottom: 1px solid #a8a8a8;
+  font-size: 14px;
+}
+
+.qa-list li:first-child {
+  margin-top: 20px;
+}
+
+.qa-list li:last-child {
+  border-bottom: none;
+}
+
+/* 各質問の前に Q. を挿入 */
+.qa-list li::before {
+  content: "Q. "; /* 挿入したいテキスト */
+  font-weight: bold;
+  color: #896666;
+}
+
+/* ==========================================
+
+フッター
+
+==========================================*/
+
+footer {
+  margin-top: 30px;
+  padding: 18px;
+  background-color: #806e6e;
+}
+
+footer p {
+  font-size: 12px;
+  color: #ffffff;
+}
