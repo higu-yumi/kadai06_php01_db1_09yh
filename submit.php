@@ -72,7 +72,7 @@ if ($_SERVER['SERVER_NAME'] == 'localhost' || $_SERVER['SERVER_ADDR'] == '127.0.
 }
 
 try{
-$dbh = new PDO('mysql:dbname=yh-deploy_gs_kadai_user;charset=utf8;host=mysql3108.db.sakura.ne.jp','yh-deploy_gs_kadai_user', '55dekitaphp2525');
+$dbh = new PDO('mysql:dbname=yh-deploy_gs_kadai_user;charset=utf8;host=mysql3108.db.sakura.ne.jp','*******', '');
   // この1行はPDOのエラーモード設定、これ必須！ display.phpに詳細記載あり
 $dbh->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e){
