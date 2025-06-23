@@ -14,7 +14,7 @@ if ($_SERVER['SERVER_NAME'] == 'localhost' || $_SERVER['SERVER_ADDR'] == '127.0.
 // データベース接続
 try {
   //dbh データベースハンドルの略、データベースを運転できる人
-$dbh = new PDO('mysql:dbname=yh-deploy_gs_kadai_user;charset=utf8;host=mysql3108.db.sakura.ne.jp','yh-deploy_gs_kadai_user', '55dekitaphp2525');
+$dbh = new PDO('mysql:dbname=yh-deploy_gs_kadai_user;charset=utf8;host=mysql3108.db.sakura.ne.jp','*******', '');
   // PDOのエラーモード設定、これ必須！
   // PDO::ATTR_ERRMODE PDOのエラーレポートモード。値を1つを指定できる
   // PDO::ERRMODE_EXCEPTION ：PDOExceptionをスローする
