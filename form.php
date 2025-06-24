@@ -20,15 +20,15 @@
     <div class="container">
       <form action="submit.php" method="POST">
         <div class="form-group">
-          <label for="name_input" class="form-title">氏名</label>
+          <label for="name_input" class="form-title">氏名<span class="akaji">*</span></label>
           <input type="text" name="name" id="name_input">
         </div>
         <div class="form-group">
-          <label for="email_input" class="form-title">メールアドレス</label>
+          <label for="email_input" class="form-title">メールアドレス<span class="akaji">*</span></label>
           <input type="text" name="email" id="email_input">
         </div>
         <div class="radio form-group">
-          <p class="form-title">受講方法</p>
+          <p class="form-title">受講方法<span class="akaji">*</span></p>
           <div>
             <label for="method_local">会場</label>
             <input type="radio" name="method" value="local" id="method_local">
@@ -39,7 +39,7 @@
           </div>
         </div>
         <div class="reason form-group">
-          <p class="form-title">受講理由</p>
+          <p class="form-title">受講理由<span class="akaji">*</span></p>
           <select name="reason" id="reason">
             <option value="notselect">選択してください</option>
             <option value="interest">この分野に関心があったから</option>

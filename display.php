@@ -8,7 +8,10 @@
 if ($_SERVER['SERVER_NAME'] == 'localhost' || $_SERVER['SERVER_ADDR'] == '127.0.0.1') {
     require_once 'config_local.php'; // XAMPP用の設定を読み込む
 } else {
-    require_once 'config_server.php'; // サーバー用の設定を読み込む
+    // サーバー用の設定を読み込む、セキュリティのため別フォルダに保管config_server.php
+    // $_SERVER['DOCUMENT_ROOT'] は、ウェブ公開ディレクトリのパスを指す。
+    // その親ディレクトリ (dirname()) から config_files フォルダの中を指定。
+    require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/config_files_private/config_server.php';
 }
 
 // データベース接続
@@ -24,7 +27,8 @@ try {
   $dbh->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);
   $dbh->setAttribute(PDO::ATTR_EMULATE_PREPARES, false); // プリペアドステートメントのエミュレーションを無効に
 } catch(PDOException $e){
-  exit('DB_CONTENT:' .$e->getMessage());
+  // もしデータ取得でエラーが起きたら
+  exit('DB_CONTENT:' .$e->getMessage()); //エラーメッセージを表示して終了
 }
 
 ////////////////////////
@@ -38,6 +42,27 @@ $sql = 'SELECT * FROM kadai_06';
 $stmt = $dbh->prepare($sql);
 // SQLの実行。準備したSQLを実行する
 $status = $stmt->execute(); // 実行結果が true/false で返される
+
+////////////////////////
+// 円グラフ(受講理由)
+//
+
+try {
+    // 1. 受講理由を集計するSQLクエリの準備
+    $display_reason = "SELECT reason, COUNT(*) AS count FROM kadai_06 GROUP BY reason";
+    // SQL実行準備のためのステートメントオブジェクト作成
+    $reason_map = $dbh->prepare($display_reason);
+    // 2. クエリを実行
+    // execute() はステートメントオブジェクト ($reason_map) に対して呼び出す
+    $reason_map->execute(); 
+    // 3. 結果を連想配列の配列として取得し、$chart_data に格納
+    // DBから取得した結果をPHPで非常に使いやすい形に変換する命令
+    $chart_data = $reason_map->fetchAll(PDO::FETCH_ASSOC); 
+} catch (PDOException $e) {
+    // もしデータ取得でエラーが起きたら
+    exit('受講理由の集計エラー: ' . $e->getMessage()); //エラーメッセージ表示して終了
+}
+
 
 ////////////////////////
 // 申込者リスト、申込者からの質問を表示する
@@ -90,53 +115,6 @@ if($status == false){
 } // whileの閉じカッコ
 }  // elseの閉じカッコ
 
-
-
-
-
-// 受講理由の日本語変換マップ
-$reason_map = [
-  'interest' => 'この分野に関心があったから',
-  'skill_up' => 'スキルアップのため',
-  'love' => '好きだから',
-];
-
-// 受講理由の集計用SQL
-$sql_reason_counts = 'SELECT reason, COUNT(*) as count FROM kadai_06 GROUP BY reason';
-$stmt_reason_counts = $dbh->prepare($sql_reason_counts);
-$status_reason_counts = $stmt_reason_counts->execute();
-
-$reason_data = []; // Chart.jsに渡すためのデータを格納する配列
-
-if($status_reason_counts == false){
-  $error = $stmt_reason_counts->errorInfo();
-  exit("SQLエラー (理由集計):" .$error[2]);
-} else {
-  while($result_reason = $stmt_reason_counts->fetch(PDO::FETCH_ASSOC)){
-    $reason_key = $result_reason['reason'];
-    $count = $result_reason['count'];
-    // データベースの値（例: 'interest'）を日本語に変換してラベルとして使う
-    $display_reason = $reason_map[$reason_key] ?? htmlspecialchars($reason_key, ENT_QUOTES, 'UTF-8');
-    $reason_data[$display_reason] = $count; // 例: ['この分野に関心があったから' => 5, 'スキルアップのため' => 3, ...]
-  }
-}
-
-// Chart.jsに渡すために、PHPの配列をJSON形式に変換
-// JavaScriptで扱いやすい形式にする
-$chart_labels = json_encode(array_keys($reason_data)); // 理由の日本語名（ラベル）
-$chart_counts = json_encode(array_values($reason_data)); // 各理由のカウント数（データ）
-
-
-
-
-
-
-
-
-
-
-
-
 ?>
 
 <!-- HTML -->
@@ -175,6 +153,15 @@ $chart_counts = json_encode(array_values($reason_data)); // 各理由のカウ�
       </table>
     </div>
 
+    <!-- 円グラフ -->
+    <div class="container">
+      <h2>受講理由</h2>
+      <div style="width: 550px; margin: 35px auto;">
+        <canvas id="reasonChart"></canvas>
+      </div>
+    </div>
+
+    <!-- 受講者からの質問 -->
     <div class="qa-list container">
       <h2>受講者からの質問</h2>
       <ul>
@@ -189,6 +176,100 @@ $chart_counts = json_encode(array_values($reason_data)); // 各理由のカウ�
   <footer>
     <p>&copy;2025 セミナーお申し込み状況&nbsp;/&nbsp;PHP</p>
   </footer>
-</body>
 
+  <!-- 受講理由の円グラフ JavaScript -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
+  <script>
+
+    Chart.register(ChartDataLabels); // 件数をグラフに表示するために追加
+    // PHPから渡されるデータをJavaScript変数に格納
+    // PHPの $chart_data 配列をJSON形式に変換し、JavaScriptに渡します
+    const chartData = <?php echo json_encode($chart_data); ?>;
+
+    // Chart.jsで必要な形式にデータを整形
+    const labels = []; // グラフの各項目の名前（例: "関心があったから"）
+    const counts = []; // 各項目の値（件数）
+
+    // データベースに保存されている英語の理由名を、グラフ表示用の日本語に変換するマップ
+    const reasonTranslations = {
+      'interest': 'この分野に関心があったから',
+      'skill_up': 'スキルアップのため',
+      'love': '好きだから',
+    };
+
+    // 取得したデータ（chartData）をループ処理して、ラベルと件数を抽出
+    chartData.forEach(item => {
+      // item.reason（例: 'interest'）を日本語に変換
+      // もし reasonTranslations にない場合は、元の英語のまま使用
+      labels.push(reasonTranslations[item.reason] || item.reason);
+      counts.push(item.count);
+    });
+
+    // グラフのデータ設定
+    // Chart.js がグラフを描くために必要なデータ形式
+    const data = {
+      labels: labels, // 上で作成した日本語のラベル（項目名）
+      datasets: [{
+        data: counts,      // 上で作成した件数（各項目の値）
+        backgroundColor: [ // 各項目の背景色（円グラフの各セグメントの色）
+          'rgba(206, 54, 87, 0.7)', // 赤系
+          'rgba(59, 137, 188, 0.7)', // 青系
+          'rgba(234, 182, 51, 0.7)', // 黄系
+        ],
+        borderColor: [ // 各項目の枠線の色
+          'rgba(206, 54, 87, 0.7)', // 赤系
+          'rgba(59, 137, 188, 0.7)', // 青系
+          'rgba(234, 182, 51, 0.7)', // 黄系
+        ],
+        borderWidth: 0 // 枠線の太さ
+      }]
+    };
+
+    // グラフのオプション設定(見た目や挙動)
+   const config = {
+      type: 'pie', // 円グラフ
+      data: data, // 定義した'data'変数を使ってグラフを描く
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            position: 'top',
+          },
+          // プラグインの追加でdatalabelsの設定が可能になった
+          datalabels: {
+            color: '#ffffff', // ラベルの色
+            textAlign: 'center', // テキストの配置
+            font: {
+              weight: 'bold', // フォントの太さ
+              size: 17 // フォントサイズ
+            },
+            // formatter関数：
+            formatter: function(value, context) {
+              // ここで表示するテキストをフォーマット
+              // value は件数（countsのデータ）
+              // context.chart.data.labels[context.dataIndex] でラベル名が取れる
+              // context.dataset.data でデータセット全体が取れる
+              let sum = 0;
+              let dataArr = context.dataset.data;
+              dataArr.map(data => {
+                  sum += data;
+              });
+              let percentage = (value * 100 / sum).toFixed(1); // 割合を計算して小数点以下1桁
+              return `${value}件\n（${percentage}%）`; // 「件数 (割合%)」の形式で表示
+            }
+          }
+        }
+      }
+    };
+
+    // JSで円グラフを画面上に描画するための最後の、そして最も重要な命令
+    // グラフを描画するcanvas要素を取得
+    const ctx = document.getElementById('reasonChart').getContext('2d');
+    // 新しいChartインスタンスを作成してグラフを描画
+    new Chart(ctx, config);
+  </script>
+
+</body>
 </html>
