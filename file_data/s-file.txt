@@ -1,0 +1,4 @@
+ふぁいるかきだし,cce@test.jp,archive,skill_up,
+あさがおはなこ,eeee@eeeeee.jp,archive,love,ファイルの書き出しをしています。
+しくらめんはなこ,cce@test.jp,local,interest,人工知能とはなんですか？
+あさがおはなこ,eeee@eeeeee.jp,local,love,「AI に人間が使われる」とはどのような状況でしょうか
