@@ -61,6 +61,31 @@ if(empty($reason) || $reason === "notselect"){
 }
 
 ////////////////////////
+// ファイル書き出し処理
+//
+// 書き出すファイルのパス
+// $_SERVER['DOCUMENT_ROOT'] は Web公開ディレクトリ (例: /home/your_account/www) を指す
+// dirname($_SERVER['DOCUMENT_ROOT']) でその親ディレクトリに上がる
+$file_path = dirname($_SERVER['DOCUMENT_ROOT']) . '/config_files_private/file_data/s-file.txt';
+
+// QAは改行を含む可能性があるため、簡易的にスペースに変換
+// 環境依存せず動く改行PHP_EOL
+$qa_for_csv = str_replace(PHP_EOL, " ", $qa); 
+// データをCSV形式で整形 (氏名,メアド,受講方法,受講理由,質問の順)
+$data_write = "$name,$email,$method,$reason,$qa_for_csv" . PHP_EOL;
+// ファイルをオープン（"a" は追記モード。ファイルがなければ新規作成）
+// fopen() はファイルリソース（ファイルハンドル）を返します。失敗はfalse
+$file_handle = fopen($file_path, "a"); //ファイルOPEN
+if ($file_handle) { // ファイルが正常にオープンできたかを確認
+    fwrite($file_handle, $data_write); // ファイルにデータを書き込む
+    fclose($file_handle); // ファイルを閉じる
+    // ファイル書き込み成功時の処理（例: エラーログに記録など）
+} else {
+    // ファイルオープン失敗時の処理
+    error_log("ファイル '{$file_path}' のオープンに失敗しました。");
+}
+
+////////////////////////
 // データベース接続
 //
 
@@ -69,10 +94,13 @@ if(empty($reason) || $reason === "notselect"){
 if ($_SERVER['SERVER_NAME'] == 'localhost' || $_SERVER['SERVER_ADDR'] == '127.0.0.1') {
     require_once 'config_local.php'; // XAMPP用の設定を読み込む
 } else {
-    require_once 'config_server.php'; // サーバー用の設定を読み込む
+    // サーバー用の設定を読み込む、セキュリティのため別フォルダに保管config_server.php
+    // $_SERVER['DOCUMENT_ROOT'] は、ウェブ公開ディレクトリのパスを指す。
+    // その親ディレクトリ (dirname()) から config_files フォルダの中を指定。
+    require_once dirname($_SERVER['DOCUMENT_ROOT']) . '/config_files_private/config_server.php';
 }
 
-// データベース接続
+// データベースに接続
 try {
   //dbh データベースハンドルの略、データベースを運転できる人
  $dsn = 'mysql:dbname=' . DB_NAME . ';charset=' . DB_CHARSET . ';host=' . DB_HOST;
@@ -120,7 +148,7 @@ if($status){
 } else {
   // データ登録失敗時の処理
   $error = $stmt->errorInfo();
-  exit("SQLエラー:".$error[2]); //"SQL_ERROR:"エラーがどこかわかりや
+  exit("SQLエラー:".$error[2]); //"SQL_ERROR:"エラーがどこかわかる
 }
 
 } else {
